@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompteur — TGVCare Assistant BD30/G30</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --prune: #A1006B;
+    --bleu: #0088CE;
+    --vert: #82BE00;
+    --orange: #E05206;
+    --violet: #6E1E78;
+    --anthracite: #00062F;
+    --bg: #f4f6f9;
+    --card: #ffffff;
+    --text: #1a1a2e;
+    --muted: #6b7280;
+    --border: #e2e6ea;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+  }
+
+  body { background: var(--bg); min-height: 100vh; }
+  #app { max-width: 860px; margin: 0 auto; padding: 1.5rem 1rem 3rem; }
+
+  .header {
+    display: flex; align-items: center; justify-content: space-between;
+    background: var(--anthracite); border-radius: 12px;
+    padding: 14px 20px; margin-bottom: 1rem;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .logo-badge {
+    background: var(--prune); color: white;
+    font-size: 11px; font-weight: 700; padding: 4px 10px;
+    border-radius: 6px; letter-spacing: .8px; text-transform: uppercase;
+    white-space: nowrap;
+  }
+  .header-title { color: white; font-size: 15px; font-weight: 600; }
+  .header-sub { color: rgba(255,255,255,.5); font-size: 11.5px; margin-top: 2px; }
+  .header-meta { color: rgba(255,255,255,.4); font-size: 11px; text-align: right; line-height: 1.5; }
+
+  .fullscreen-btn {
+    background: none; border: 1.5px solid rgba(255,255,255,.25);
+    color: rgba(255,255,255,.75); padding: 7px 14px; border-radius: 7px;
+    cursor: pointer; font-size: 12px; font-family: inherit; font-weight: 600;
+    display: flex; align-items: center; gap: 6px;
+    transition: all .15s;
+  }
+  .fullscreen-btn:hover { background: rgba(255,255,255,.1); color: white; }
+
+  .progress-bar-wrap {
+    background: var(--border); border-radius: 4px; height: 4px; margin-bottom: 1rem;
+  }
+  .progress-bar {
+    height: 4px; border-radius: 4px;
+    background: linear-gradient(90deg, var(--prune), var(--bleu));
+    transition: width .4s ease;
+  }
+
+  .slide-card {
+    background: var(--card); border-radius: 14px;
+    border: 1px solid var(--border); overflow: hidden; margin-bottom: 1rem;
+  }
+  .slide-header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 20px; border-bottom: 1px solid var(--border);
+  }
+  .slide-num {
+    width: 34px; height: 34px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: white; flex-shrink: 0;
+  }
+  .slide-label {
+    font-size: 11px; font-weight: 700; letter-spacing: .7px;
+    text-transform: uppercase; color: var(--muted); margin-bottom: 2px;
+  }
+  .slide-title { font-size: 15px; font-weight: 600; color: var(--text); }
+
+  .discours {
+    padding: 20px 24px;
+    font-size: 16px; line-height: 1.9;
+    color: var(--text);
+    border-left: 3px solid transparent;
+  }
+  .discours strong { font-weight: 600; }
+
+  .note-interne {
+    margin: 0 24px 16px;
+    background: #fdf3fb; border-left: 3px solid var(--prune);
+    border-radius: 0 8px 8px 0;
+    padding: 10px 14px;
+    font-size: 12.5px; color: var(--prune); font-style: italic; line-height: 1.6;
+  }
+  .note-label {
+    font-size: 10.5px; font-weight: 700; letter-spacing: .6px;
+    text-transform: uppercase; color: var(--prune); margin-bottom: 3px;
+    font-style: normal;
+  }
+
+  .objections-section {
+    background: var(--card); border-radius: 14px;
+    border: 1px solid var(--border); margin-bottom: 1rem; overflow: hidden;
+  }
+  .objections-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 20px; cursor: pointer; user-select: none;
+    border-bottom: 1px solid transparent; transition: border-color .2s;
+  }
+  .objections-header.open { border-bottom-color: var(--border); }
+  .objections-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 600; color: var(--text);
+  }
+  .obj-badge {
+    background: #fdf3fb; color: var(--prune);
+    font-size: 10.5px; font-weight: 700; padding: 2px 8px;
+    border-radius: 12px; border: 1px solid #f0c0e0;
+  }
+  .chevron { color: var(--muted); font-size: 14px; transition: transform .25s; display: inline-block; }
+  .chevron.open { transform: rotate(180deg); }
+
+  .obj-list { padding: 4px 20px 18px; }
+  .obj-item { margin-top: 16px; }
+  .obj-q {
+    font-size: 13px; font-weight: 600; color: var(--violet);
+    margin-bottom: 6px; display: flex; align-items: flex-start; gap: 6px;
+  }
+  .obj-q::before { content: "Q."; font-weight: 700; flex-shrink: 0; }
+  .obj-r {
+    font-size: 13.5px; line-height: 1.75; color: var(--text);
+    padding-left: 20px; border-left: 2px solid var(--border);
+  }
+
+  .nav {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px; background: var(--card);
+    border-radius: 14px; border: 1px solid var(--border);
+    padding: 14px 20px; margin-bottom: 1rem;
+  }
+  .nav-btn {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 18px; border-radius: 8px; border: 1.5px solid var(--border);
+    background: none; cursor: pointer; font-size: 13px; font-weight: 600;
+    color: var(--text); font-family: inherit; transition: all .15s;
+  }
+  .nav-btn:hover:not(:disabled) { background: var(--bg); }
+  .nav-btn.primary { background: var(--bleu); color: white; border-color: var(--bleu); }
+  .nav-btn.primary:hover:not(:disabled) { background: #006aaa; }
+  .nav-btn:disabled { opacity: .35; cursor: not-allowed; }
+
+  .slide-counter { font-size: 13px; color: var(--muted); font-weight: 500; white-space: nowrap; }
+  .slide-dots { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; justify-content: center; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--border); cursor: pointer;
+    transition: all .2s; border: none; padding: 0;
+  }
+  .dot.active { background: var(--bleu); transform: scale(1.4); }
+  .dot.done { background: var(--vert); }
+
+  .shortcut-hint {
+    text-align: center; font-size: 11px; color: var(--muted);
+    padding-bottom: .5rem;
+  }
+  .shortcut-hint kbd {
+    background: var(--bg); border: 1px solid var(--border);
+    border-radius: 4px; padding: 1px 5px; font-size: 10px; font-family: inherit;
+  }
+
+  /* ── PLEIN ECRAN ── */
+  #fullscreen-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: var(--anthracite);
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 60px 60px 100px;
+  }
+  #fullscreen-overlay.active { display: flex; }
+
+  .fs-progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; background: rgba(255,255,255,.1); }
+  .fs-progress-bar { height: 3px; background: var(--prune); transition: width .4s; }
+
+  .fs-close {
+    position: fixed; top: 20px; right: 24px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+    color: rgba(255,255,255,.8); padding: 7px 16px; border-radius: 7px;
+    font-size: 13px; cursor: pointer; font-family: inherit; font-weight: 500;
+    display: flex; align-items: center; gap: 6px;
+    transition: background .15s;
+  }
+  .fs-close:hover { background: rgba(255,255,255,.18); }
+
+  .fs-slide-num {
+    font-size: 12px; font-weight: 700; letter-spacing: 1.2px;
+    text-transform: uppercase; color: rgba(255,255,255,.3);
+    margin-bottom: 16px;
+  }
+  .fs-label {
+    font-size: 13px; color: rgba(255,255,255,.35);
+    margin-bottom: 8px; letter-spacing: .4px;
+  }
+  .fs-title {
+    font-size: 20px; font-weight: 600;
+    color: rgba(255,255,255,.45); margin-bottom: 36px;
+    text-align: center;
+  }
+  .fs-discours {
+    font-size: 27px; line-height: 1.8; color: white;
+    max-width: 920px; text-align: center; font-weight: 400;
+  }
+  .fs-discours strong { font-weight: 600; color: #fff; }
+  .fs-note {
+    margin-top: 30px; padding: 12px 24px;
+    border: 1px solid rgba(161,0,107,.5); border-radius: 10px;
+    background: rgba(161,0,107,.12); color: rgba(255,255,255,.6);
+    font-size: 14px; font-style: italic; max-width: 680px; text-align: center;
+    line-height: 1.6;
+  }
+  .fs-note-label {
+    font-size: 10px; font-weight: 700; letter-spacing: .8px;
+    text-transform: uppercase; color: rgba(161,0,107,.8);
+    margin-bottom: 4px; font-style: normal;
+  }
+
+  .fs-nav {
+    position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 16px;
+  }
+  .fs-btn {
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+    color: white; padding: 10px 30px; border-radius: 8px;
+    font-size: 18px; cursor: pointer; font-family: inherit; font-weight: 600;
+    transition: background .15s;
+  }
+  .fs-btn:hover:not(:disabled) { background: rgba(255,255,255,.2); }
+  .fs-btn:disabled { opacity: .2; cursor: not-allowed; }
+  .fs-counter { color: rgba(255,255,255,.35); font-size: 14px; min-width: 80px; text-align: center; }
+
+  .fs-color-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 4px;
+    transition: background .4s;
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+  <div class="header">
+    <div class="header-left">
+      <div class="logo-badge">SNCF</div>
+      <div>
+        <div class="header-title">TGVCare Assistant BD30/G30</div>
+        <div class="header-sub">Teams CARE &middot; Jeudi 19 juin 2026 &middot; 13h30 &middot; Paulo Alves, RCAD Beziers</div>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <div class="header-meta">30 min &middot; Managers et encadrement<br>11 slides + objections</div>
+      <button class="fullscreen-btn" onclick="openFullscreen()">
+        <i class="ti ti-presentation"></i> Presenter
+      </button>
+    </div>
+  </div>
+
+  <div class="progress-bar-wrap">
+    <div class="progress-bar" id="progress-bar" style="width:9%"></div>
+  </div>
+
+  <div id="slide-view"></div>
+
+  <!-- ══ SCENARIO DEMO ══ -->
+  <div class="objections-section" id="demo-section">
+    <div class="objections-header" id="demo-toggle" onclick="toggleDemo()">
+      <div class="objections-title">
+        <i class="ti ti-player-play" style="font-size:18px;color:var(--vert)"></i>
+        Scenario 1 — BD30 multi-segments, adulte + enfant
+        <span class="obj-badge" style="background:#f0fbe0;color:#3a6600;border-color:#b8e070">Retard + Frais</span>
+      </div>
+      <span class="chevron" id="demo-chevron"><i class="ti ti-chevron-down"></i></span>
+    </div>
+    <div id="demo-body" style="display:none">
+      <div style="padding:16px 20px 20px">
+
+        <!-- Contexte -->
+        <div style="background:#f0fbe0;border-left:3px solid var(--vert);border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:18px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:#3a6600;margin-bottom:4px">Contexte dossier</div>
+          <div style="font-size:13.5px;color:#1a2e10;line-height:1.75">
+            Client <strong>M. et Mme Dupont</strong> — Billet Direct <strong>Aubagne → Lille-Flandres</strong>, le 12 juin 2026.<br>
+            <strong>2 voyageurs : 1 adulte + 1 enfant.</strong> Tarif Standard. Incident catenaire a Lyon-Part-Dieu.<br>
+            Rupture de correspondance a Lyon. Train de report pris. Arrivee a Lille a <strong>23h47</strong> au lieu de <strong>20h14</strong>.<br><span style="font-size:12px;color:#3a6600;font-weight:600">Mode BD30 — Billet direct, 3 segments, retard final 213 min (palier 180-239 min).</span>
+          </div>
+        </div>
+
+        <!-- Segments -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-list-details" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--bleu)"></i>Saisie des segments
+        </div>
+
+        <div style="display:grid;gap:8px;margin-bottom:18px">
+          <!-- Segment 1 -->
+          <div style="border:1.5px solid #e8c0d8;border-radius:10px;overflow:hidden">
+            <div style="background:var(--prune);color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              <span>Segment 1 — TER (sauf KRONO+)</span>
+              <span style="font-size:10.5px;opacity:.8;font-weight:400">Marseille-Saint-Charles → Lyon-Part-Dieu</span>
+            </div>
+            <div style="padding:10px 14px;background:#fdf6fb;font-size:12.5px;line-height:1.9;color:var(--text)">
+              Transporteur : <strong>TER (sauf KRONO+)</strong> &nbsp;·&nbsp; Mode multi-passagers<br>
+              Adulte : <strong>14,00 €</strong> &nbsp;·&nbsp; Enfant : <strong>7,00 €</strong> &nbsp;·&nbsp; Total segment : <strong>21,00 €</strong><br>
+              <span style="color:var(--muted);font-size:11.5px">Billet direct — retard destination finale 213 min applique sur ce segment. TER non TRSI, eligible BD30.</span>
+            </div>
+          </div>
+          <!-- Segment 2 TGV Marseille-Lyon -->
+          <div style="border:1.5px solid #b8d0f0;border-radius:10px;overflow:hidden">
+            <div style="background:var(--bleu);color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              <span>Segment 2 — TGV INOUI domestique</span>
+              <span style="font-size:10.5px;opacity:.8;font-weight:400">Marseille-Saint-Charles → Lyon-Part-Dieu</span>
+            </div>
+            <div style="padding:10px 14px;background:#f0f7ff;font-size:12.5px;line-height:1.9;color:var(--text)">
+              Transporteur : <strong>TGV INOUI domestique</strong> &nbsp;·&nbsp; Mode multi-passagers<br>
+              Adulte : <strong>38,00 €</strong> &nbsp;·&nbsp; Enfant : <strong>16,00 €</strong> &nbsp;·&nbsp; Total segment : <strong>54,00 €</strong><br>
+              <span style="color:#b05000;font-size:11.5px;font-weight:600">Incident catenaire a Lyon — cause de la rupture de correspondance.</span>
+            </div>
+          </div>
+          <!-- Segment 3 TGV Lyon-Lille -->
+          <div style="border:1.5px solid #e8c0d8;border-radius:10px;overflow:hidden">
+            <div style="background:var(--prune);color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              <span>Segment 3 — TGV INOUI domestique</span>
+              <span style="font-size:10.5px;opacity:.8;font-weight:400">Lyon-Part-Dieu → Lille-Flandres</span>
+            </div>
+            <div style="padding:10px 14px;background:#fdf6fb;font-size:12.5px;line-height:1.9;color:var(--text)">
+              Transporteur : <strong>TGV INOUI domestique</strong> &nbsp;·&nbsp; Mode multi-passagers<br>
+              Adulte : <strong>60,00 €</strong> &nbsp;·&nbsp; Enfant : <strong>30,00 €</strong> &nbsp;·&nbsp; Total segment : <strong>90,00 €</strong><br>
+              <span style="color:var(--muted);font-size:11.5px">Correspondance manquee a Lyon. Train de report pris. Rupture de correspondance cochee.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Retard -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-clock" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--orange)"></i>Retard a la destination finale
+        </div>
+        <div style="background:#fff4e0;border:1.5px solid #e8c060;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12.5px;line-height:1.9;color:var(--text)">
+          Arrivee theorique : <strong>20h14</strong> &nbsp;·&nbsp; Arrivee reelle : <strong>23h47</strong><br>
+          Retard calcule : <strong style="color:var(--orange);font-size:14px">213 minutes (3h33)</strong> — palier 180–239 min<br>
+          Cocher : <strong>Rupture de correspondance (train de report utilise)</strong><br>
+          <span style="color:var(--muted);font-size:11.5px">Le retard est celui constate a l'arrivee finale via le train de report.</span>
+        </div>
+
+        <!-- Calcul BD30 -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-calculator" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--prune)"></i>Calcul BD30 — Resultat attendu
+        </div>
+        <div style="border:1.5px solid #e8c0d8;border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:var(--prune);color:white">
+                <th style="padding:9px 14px;text-align:left;font-weight:700">Segment</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Prix total</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Taux</th>
+                <th style="padding:9px 14px;text-align:right;font-weight:700">Indemnisation</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fdf6fb;border-bottom:1px solid #f0d0e8">
+                <td style="padding:9px 14px;color:var(--text)">TER ZOU — Seg. 1<br><span style="font-size:11px;color:#3a6600">14,00 + 7,00 €</span></td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600">21,00 €</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600;color:#3a6600">50%</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:#3a6600">10,50 €</td>
+              </tr>
+              <tr style="background:#fdf6fb;border-bottom:1px solid #f0d0e8">
+                <td style="padding:9px 14px;color:var(--text)">TGV INOUI — Seg. 2<br><span style="font-size:11px;color:var(--orange)">38,00 + 16,00 €</span></td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600">54,00 €</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600;color:var(--bleu)">75%</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:var(--bleu)">40,50 €</td>
+              </tr>
+              <tr style="background:#fdf6fb">
+                <td style="padding:9px 14px;color:var(--text)">TGV INOUI — Seg. 3<br><span style="font-size:11px;color:var(--muted)">60,00 + 30,00 €</span></td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600">90,00 €</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600;color:var(--prune)">75%</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:var(--prune)">67,50 €</td>
+              </tr>
+              <tr style="background:var(--prune)">
+                <td style="padding:10px 14px;color:white;font-weight:700" colspan="3">Total BD30</td>
+                <td style="padding:10px 14px;text-align:right;color:white;font-weight:900;font-size:16px">118,50 €</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding:8px 14px;background:#fdf6fb;font-size:11px;color:var(--muted)">
+            Billet direct — retard destination finale 213 min (palier 180–239 min) applique sur tous les segments · TGV INOUI = 75% · TER = 50% · Mode BAD ou virement
+          </div>
+        </div>
+
+        <!-- Frais annexes -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-receipt" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--bleu)"></i>Frais annexes — Onglet Frais
+        </div>
+        <div style="background:#eff6ff;border:1.5px solid #b8d0f0;border-radius:10px;padding:12px 16px;margin-bottom:10px;font-size:12.5px;line-height:1.75;color:var(--text)">
+          Motif de perturbation : <strong>Retard &gt;= 60 min</strong> &nbsp;·&nbsp; Client non renonçant &nbsp;·&nbsp;
+          Avise apres H00 &nbsp;·&nbsp; COS : <strong>aucune proposition dans les 100 minutes</strong><br>
+          <span style="color:var(--vert);font-weight:700">Verdict : ACCORD frais annexes</span>
+        </div>
+        <div style="border:1.5px solid #b8d0f0;border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:var(--bleu);color:white">
+                <th style="padding:9px 14px;text-align:left;font-weight:700">Type de frais</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Qty</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Montant reel</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Plafond</th>
+                <th style="padding:9px 14px;text-align:right;font-weight:700">Rembourse</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#f0f7ff;border-bottom:1px solid #d0e4f8">
+                <td style="padding:9px 14px">Restauration</td>
+                <td style="padding:9px 14px;text-align:center">2 voy.</td>
+                <td style="padding:9px 14px;text-align:center">34,00 €</td>
+                <td style="padding:9px 14px;text-align:center;color:var(--orange)">15 €/voy.</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:var(--bleu)">30,00 €</td>
+              </tr>
+              <tr style="background:#f0f7ff">
+                <td style="padding:9px 14px">Taxi nuit 23h–6h</td>
+                <td style="padding:9px 14px;text-align:center">1 course</td>
+                <td style="padding:9px 14px;text-align:center">47,00 €</td>
+                <td style="padding:9px 14px;text-align:center;color:var(--vert)">50 € max</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:var(--bleu)">47,00 €</td>
+              </tr>
+              <tr style="background:var(--bleu)">
+                <td style="padding:10px 14px;color:white;font-weight:700" colspan="4">Total frais</td>
+                <td style="padding:10px 14px;text-align:right;color:white;font-weight:900;font-size:16px">77,00 €</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding:8px 14px;background:#f0f7ff;font-size:11px;color:var(--muted)">
+            Restauration : plafond 15 € x 2 voyageurs = 30 € · Taxi nuit : plafond 50 €/course (arrivee a 23h47) · sur justificatifs
+          </div>
+        </div>
+
+        <!-- Total general -->
+        <div style="background:var(--anthracite);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Total dossier M. et Mme Dupont</div>
+            <div style="color:rgba(255,255,255,.7);font-size:13px">BD30 : 118,50 € &nbsp;+&nbsp; Frais : 77,00 €</div>
+          </div>
+          <div style="color:white;font-size:32px;font-weight:900;letter-spacing:-1px">195,50 €</div>
+        </div>
+
+        <div style="margin-top:14px;padding:10px 14px;background:#fff4e0;border:1px solid #e8c060;border-radius:8px;font-size:12px;color:#7a4000;line-height:1.7">
+          <strong>Point a montrer a l'audience :</strong> sans l'outil, l'agent doit calculer 6 montants individuels (3 segments x 2 voyageurs), retrouver le plafond restauration dans l'Annexe 1, verifier l'eligibilite du taxi nuit, et assembler le tout sans se tromper de palier. Ici, <strong>saisie en 2 minutes, note Siebel generee en un clic.</strong>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCENARIO DEMO 2 ══ -->
+  <div class="objections-section" id="demo2-section">
+    <div class="objections-header" id="demo2-toggle" onclick="toggleDemo2()">
+      <div class="objections-title">
+        <i class="ti ti-player-play" style="font-size:18px;color:var(--violet)"></i>
+        Scenario 2 — Billet Prime, G30 mono-segment
+        <span class="obj-badge" style="background:#f3eeff;color:#5B2D8E;border-color:#c8a0f0">Points + BAD</span>
+      </div>
+      <span class="chevron" id="demo2-chevron"><i class="ti ti-chevron-down"></i></span>
+    </div>
+    <div id="demo2-body" style="display:none">
+      <div style="padding:16px 20px 20px">
+
+        <!-- Contexte -->
+        <div style="background:#f3eeff;border-left:3px solid var(--violet);border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:18px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--violet);margin-bottom:4px">Contexte dossier</div>
+          <div style="font-size:13.5px;color:#1a0a2e;line-height:1.75">
+            Client <strong>Mme Fontaine</strong> — Billet direct <strong>Lille-Flandres → Marseille-Saint-Charles</strong>, le 17 juin 2026.<br>
+            <strong>2 voyageurs sur le meme billet Prime</strong> : Mme Fontaine (titulaire FID) + M. Fontaine (tiers).<br>
+            Retard enregistre a l'arrivee : <strong>75 minutes</strong> — palier 60–119 min.<br>
+            <span style="font-size:12px;color:var(--violet);font-weight:600">Mode G30 — 1 segment unique TGV INOUI domestique.</span>
+          </div>
+        </div>
+
+        <!-- Alerte double tarif -->
+        <div style="background:#fff8e0;border:1.5px solid #e8c060;border-radius:10px;padding:11px 15px;margin-bottom:18px;font-size:12.5px;line-height:1.75;color:#7a4000">
+          <strong>Point cle a montrer :</strong> ce dossier comporte <strong>2 tarifs differents sur le meme segment</strong>.<br>
+          L'outil active le mode <strong>multi-passagers</strong> pour saisir chaque voyageur separement avec son tarif.<br>
+          ONICS ne distingue pas les tarifs — il appliquerait un seul taux ou refuserait le calcul.
+        </div>
+
+        <!-- Saisie -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-list-details" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--violet)"></i>Saisie du segment — Mode multi-passagers
+        </div>
+
+        <div style="border:1.5px solid #c8a0f0;border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <div style="background:var(--violet);color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+            <span>Segment unique — TGV INOUI domestique</span>
+            <span style="font-size:10.5px;opacity:.8;font-weight:400">Lille-Flandres → Marseille-Saint-Charles</span>
+          </div>
+          <div style="padding:12px 16px;background:#f9f4ff">
+            <!-- Passager 1 -->
+            <div style="border:1px solid #dcc8f8;border-radius:8px;padding:10px 14px;margin-bottom:8px;background:white">
+              <div style="font-size:11px;font-weight:700;color:var(--violet);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Voyageur 1 — Titulaire</div>
+              <div style="font-size:12.5px;line-height:1.9;color:var(--text)">
+                Tarif : <strong>Billet Prime — Titulaire</strong><br>
+                Prix billet : <strong>0 € </strong><span style="color:var(--muted);font-size:11.5px">(billet Prime, valeur nominale non saisie)</span><br>
+                Indemnisation : <strong style="color:#1A3A8F">2 000 points FID</strong> — versement sur compte fidelite Mme Fontaine
+              </div>
+            </div>
+            <!-- Passager 2 -->
+            <div style="border:1px solid #dcc8f8;border-radius:8px;padding:10px 14px;background:white">
+              <div style="font-size:11px;font-weight:700;color:#5B2D8E;margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px">Voyageur 2 — Tiers (M. Fontaine)</div>
+              <div style="font-size:12.5px;line-height:1.9;color:var(--text)">
+                Tarif : <strong>Billet Prime — FID + Tiers</strong><br>
+                Prix billet tiers : <strong>saisir le montant du billet</strong> <span style="color:var(--muted);font-size:11.5px">(ex. 89,00 €)</span><br>
+                Indemnisation titulaire FID : <strong style="color:#1A3A8F">2 000 points FID</strong> supplementaires<br>
+                Indemnisation tiers : <strong style="color:#5B2D8E">10,00 € BAD</strong>
+              </div>
+            </div>
+          </div>
+          <div style="padding:8px 14px;background:#f3eeff;font-size:11px;color:#5B2D8E">
+            Retard : 75 min — palier 60–119 min · TGV INOUI · Bareme Prime LT 2397
+          </div>
+        </div>
+
+        <!-- Tableau resultat -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-calculator" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--violet)"></i>Resultat G30 — ce que l'outil affiche
+        </div>
+
+        <div style="border:1.5px solid #c8a0f0;border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:var(--violet);color:white">
+                <th style="padding:9px 14px;text-align:left;font-weight:700">Voyageur</th>
+                <th style="padding:9px 14px;text-align:left;font-weight:700">Tarif</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Points FID</th>
+                <th style="padding:9px 14px;text-align:right;font-weight:700">BAD</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#f9f4ff;border-bottom:1px solid #e8d8fc">
+                <td style="padding:9px 14px;color:var(--text)">Titulaire (Mme Fontaine)</td>
+                <td style="padding:9px 14px;color:#1A3A8F;font-weight:600">Prime — Titulaire</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:700;color:#1A3A8F">2 000 pts</td>
+                <td style="padding:9px 14px;text-align:right;color:var(--muted)">—</td>
+              </tr>
+              <tr style="background:#f9f4ff;border-bottom:1px solid #e8d8fc">
+                <td style="padding:9px 14px;color:var(--text)">Tiers (M. Fontaine)</td>
+                <td style="padding:9px 14px;color:#5B2D8E;font-weight:600">Prime — FID + Tiers</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:700;color:#1A3A8F">2 000 pts</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:#5B2D8E">10,00 €</td>
+              </tr>
+              <tr style="background:var(--violet)">
+                <td style="padding:10px 14px;color:white;font-weight:700" colspan="2">Total G30</td>
+                <td style="padding:10px 14px;text-align:center;color:white;font-weight:900;font-size:15px">4 000 pts FID</td>
+                <td style="padding:10px 14px;text-align:right;color:white;font-weight:900;font-size:15px">10,00 €</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding:8px 14px;background:#f3eeff;font-size:11px;color:#5B2D8E">
+            2 demandes distinctes a creer (LT 2397) · Points credites sur compte fidelite Mme Fontaine · BAD verse au tiers M. Fontaine
+          </div>
+        </div>
+
+        <!-- Note audience -->
+        <div style="padding:10px 14px;background:#fff4e0;border:1px solid #e8c060;border-radius:8px;font-size:12px;color:#7a4000;line-height:1.7">
+          <strong>Point a montrer a l'audience :</strong> sans l'outil, l'agent doit connaitre par coeur le bareme Prime (LT 2397), savoir qu'il faut creer <strong>2 demandes distinctes</strong>, et distinguer les indemnisations titulaire / tiers. L'outil guide chaque etape et genere automatiquement la note Siebel avec les 2 lignes separees.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ SCENARIO DEMO 3 ══ -->
+  <div class="objections-section" id="demo3-section">
+    <div class="objections-header" id="demo3-toggle" onclick="toggleDemo3()">
+      <div class="objections-title">
+        <i class="ti ti-player-play" style="font-size:18px;color:var(--orange)"></i>
+        Scenario 3 — OUIGO + rupture de correspondance TGV
+        <span class="obj-badge" style="background:#fff0e8;color:var(--orange);border-color:#f0b090">Anti-cumul RT 6373</span>
+      </div>
+      <span class="chevron" id="demo3-chevron"><i class="ti ti-chevron-down"></i></span>
+    </div>
+    <div id="demo3-body" style="display:none">
+      <div style="padding:16px 20px 20px">
+
+        <!-- Contexte -->
+        <div style="background:#fff0e8;border-left:3px solid var(--orange);border-radius:0 10px 10px 0;padding:12px 16px;margin-bottom:18px">
+          <div style="font-size:11px;font-weight:700;letter-spacing:.7px;text-transform:uppercase;color:var(--orange);margin-bottom:4px">Contexte dossier</div>
+          <div style="font-size:13.5px;color:#2e0a00;line-height:1.75">
+            Client <strong>M. Garnier</strong> — Billet direct <strong>Lyon-Part-Dieu → Rennes</strong>, le 14 juin 2026.<br>
+            Tarif <strong>Standard</strong> — 1 voyageur. <strong>2 segments</strong> : OUIGO puis TGV INOUI avec correspondance a Marne-la-Vallee.<br>
+            OUIGO arrive a Marne-la-Vallee avec <strong>62 min de retard</strong> → correspondance TGV manquee.<br>
+            Arrivee reelle a Rennes via train de report : <strong>2h30 de retard</strong> (150 min) sur l'heure theorique.<br>
+            <span style="font-size:12px;color:var(--orange);font-weight:600">OUIGO a verse automatiquement une compensation de 8,50 €.</span>
+          </div>
+        </div>
+
+        <!-- Alerte anti-cumul -->
+        <div style="background:#fff8e0;border:1.5px solid #e8c060;border-radius:10px;padding:11px 15px;margin-bottom:18px;font-size:12.5px;line-height:1.75;color:#7a4000">
+          <strong>Point cle — Regle anti-cumul RT 6373 :</strong> OUIGO verse parfois une compensation automatique. L'outil verifie si ce montant est <strong>superieur ou inferieur</strong> a la G30 due sur le segment OUIGO. Si inferieur, on verse uniquement le <strong>complement</strong> en BAD. Si superieur ou egal, <strong>refus</strong> — ne pas re-compenser.
+        </div>
+
+        <!-- Segments -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-list-details" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--orange)"></i>Saisie des segments
+        </div>
+        <div style="display:grid;gap:8px;margin-bottom:18px">
+
+          <!-- Segment 1 OUIGO -->
+          <div style="border:1.5px solid #f8b0d0;border-radius:10px;overflow:hidden">
+            <div style="background:#E8005D;color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              <span>Segment 1 — OUIGO</span>
+              <span style="font-size:10.5px;opacity:.8;font-weight:400">Lyon-Part-Dieu → Marne-la-Vallee-Chessy</span>
+            </div>
+            <div style="padding:10px 14px;background:#fff5f8;font-size:12.5px;line-height:1.9;color:var(--text)">
+              Transporteur : <strong>OUIGO</strong> &nbsp;·&nbsp; Tarif : <strong>Standard</strong><br>
+              Prix billet : <strong>34,00 €</strong> &nbsp;·&nbsp; 1 voyageur<br>
+              <span style="color:#E8005D;font-size:11.5px;font-weight:600">Retard propre OUIGO a Marne-la-Vallee : 62 min — cause de la rupture de correspondance.</span>
+            </div>
+          </div>
+
+          <!-- Segment 2 TGV -->
+          <div style="border:1.5px solid #b8d0f0;border-radius:10px;overflow:hidden">
+            <div style="background:var(--bleu);color:white;padding:8px 14px;font-size:12px;font-weight:700;display:flex;justify-content:space-between;align-items:center">
+              <span>Segment 2 — TGV INOUI domestique</span>
+              <span style="font-size:10.5px;opacity:.8;font-weight:400">Marne-la-Vallee-Chessy → Rennes</span>
+            </div>
+            <div style="padding:10px 14px;background:#f0f7ff;font-size:12.5px;line-height:1.9;color:var(--text)">
+              Transporteur : <strong>TGV INOUI domestique</strong> &nbsp;·&nbsp; Tarif : <strong>Standard</strong><br>
+              Prix billet : <strong>62,00 €</strong> &nbsp;·&nbsp; 1 voyageur<br>
+              <span style="color:var(--muted);font-size:11.5px">Correspondance manquee — train de report pris. Cocher : <strong>Rupture de correspondance</strong>.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Retard -->
+        <div style="background:#fff0e8;border:1.5px solid #f0b090;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12.5px;line-height:1.9;color:var(--text)">
+          <strong>Retard a la destination finale (Rennes) : 150 min — palier 120–179 min</strong><br>
+          Cocher : <strong>Rupture de correspondance (train de report utilise)</strong><br>
+          <span style="color:var(--muted);font-size:11.5px">Billet direct — c'est le retard reel a Rennes qui s'applique sur tous les segments.</span>
+        </div>
+
+        <!-- Calcul BD30 -->
+        <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px">
+          <i class="ti ti-calculator" style="font-size:15px;vertical-align:-2px;margin-right:6px;color:var(--orange)"></i>Calcul BD30 — Resultat attendu
+        </div>
+        <div style="border:1.5px solid #f0b090;border-radius:10px;overflow:hidden;margin-bottom:12px">
+          <table style="width:100%;border-collapse:collapse;font-size:12.5px">
+            <thead>
+              <tr style="background:var(--orange);color:white">
+                <th style="padding:9px 14px;text-align:left;font-weight:700">Segment</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Prix</th>
+                <th style="padding:9px 14px;text-align:center;font-weight:700">Taux</th>
+                <th style="padding:9px 14px;text-align:right;font-weight:700">G30 due</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="background:#fff5f0;border-bottom:1px solid #f0d0b8">
+                <td style="padding:9px 14px;color:var(--text)">
+                  <strong>OUIGO — Seg. 1</strong><br>
+                  <span style="font-size:11px;color:#E8005D">Compensation OUIGO deja versee : 8,50 €</span>
+                </td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600">34,00 €</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600;color:#E8005D">50%</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:#E8005D">17,00 €</td>
+              </tr>
+              <tr style="background:#fff5f0">
+                <td style="padding:9px 14px;color:var(--text)">TGV INOUI — Seg. 2</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600">62,00 €</td>
+                <td style="padding:9px 14px;text-align:center;font-weight:600;color:var(--bleu)">50%</td>
+                <td style="padding:9px 14px;text-align:right;font-weight:700;color:var(--bleu)">31,00 €</td>
+              </tr>
+              <tr style="background:var(--orange)">
+                <td style="padding:10px 14px;color:white;font-weight:700" colspan="3">Total G30 brut</td>
+                <td style="padding:10px 14px;text-align:right;color:white;font-weight:900;font-size:16px">48,00 €</td>
+              </tr>
+            </tbody>
+          </table>
+          <div style="padding:8px 14px;background:#fff5f0;font-size:11px;color:#7a4000">
+            Billet direct — retard destination finale 150 min (palier 120–179 min) · OUIGO = 50% · TGV INOUI = 50% · BAD recréditable OUIGO / BAD ou virement TGV
+          </div>
+        </div>
+
+        <!-- Anti-cumul -->
+        <div style="border:1.5px solid #E8005D;border-radius:10px;overflow:hidden;margin-bottom:18px">
+          <div style="background:#E8005D;color:white;padding:8px 14px;font-size:12px;font-weight:700">
+            Regle anti-cumul RT 6373 — Segment OUIGO
+          </div>
+          <div style="padding:12px 16px;background:#fff5f8;font-size:12.5px;line-height:1.9;color:var(--text)">
+            G30 due sur segment OUIGO : <strong>17,00 €</strong><br>
+            Compensation deja versee par OUIGO : <strong>8,50 €</strong><br>
+            8,50 € &lt; 17,00 € → <strong style="color:#009900">COMPLEMENT a verser : 8,50 € en BAD recréditable</strong><br>
+            <span style="color:var(--muted);font-size:11.5px">Si OUIGO avait verse ≥ 17,00 € : refus total sur ce segment.</span>
+          </div>
+        </div>
+
+        <!-- Total net -->
+        <div style="background:var(--anthracite);border-radius:12px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:14px">
+          <div>
+            <div style="color:rgba(255,255,255,.5);font-size:11px;text-transform:uppercase;letter-spacing:.8px;margin-bottom:4px">Total dossier M. Garnier — apres deduction anti-cumul</div>
+            <div style="color:rgba(255,255,255,.7);font-size:13px">OUIGO complement : 8,50 € &nbsp;+&nbsp; TGV INOUI : 31,00 €</div>
+          </div>
+          <div style="color:white;font-size:32px;font-weight:900;letter-spacing:-1px">39,50 €</div>
+        </div>
+
+        <!-- Note audience -->
+        <div style="padding:10px 14px;background:#fff4e0;border:1px solid #e8c060;border-radius:8px;font-size:12px;color:#7a4000;line-height:1.7">
+          <strong>Point a montrer a l'audience :</strong> sans l'outil, un agent risque de re-compenser integralement le segment OUIGO sans connaitre la regle anti-cumul RT 6373. Resultat : double indemnisation non conforme. L'outil detecte la compensation OUIGO existante, calcule le complement exact, et bloque le sur-remboursement.
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ OBJECTIONS ══ -->
+  <div class="objections-section">
+    <div class="objections-header" id="obj-toggle" onclick="toggleObj()">
+      <div class="objections-title">
+        <i class="ti ti-help-circle" style="font-size:18px;color:var(--violet)"></i>
+        Questions et objections anticipees
+        <span class="obj-badge">10 scenarios</span>
+      </div>
+      <span class="chevron" id="obj-chevron"><i class="ti ti-chevron-down"></i></span>
+    </div>
+    <div id="obj-body" style="display:none">
+      <div class="obj-list" id="obj-list"></div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <button class="nav-btn" id="btn-prev" onclick="go(-1)">
+      <i class="ti ti-arrow-left"></i> Precedent
+    </button>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+      <span class="slide-counter" id="slide-counter">Slide 1 / 11</span>
+      <div class="slide-dots" id="dots"></div>
+    </div>
+    <button class="nav-btn primary" id="btn-next" onclick="go(1)">
+      Suivant <i class="ti ti-arrow-right"></i>
+    </button>
+  </div>
+
+  <div class="shortcut-hint">
+    Navigation : <kbd>&larr;</kbd> <kbd>&rarr;</kbd> &nbsp;&middot;&nbsp; Plein ecran : <kbd>F</kbd> &nbsp;&middot;&nbsp; Quitter : <kbd>Echap</kbd>
+  </div>
+</div>
+
+<!-- PLEIN ECRAN -->
+<div id="fullscreen-overlay">
+  <div class="fs-progress"><div class="fs-progress-bar" id="fs-prog"></div></div>
+  <button class="fs-close" onclick="closeFullscreen()"><i class="ti ti-x"></i> Fermer</button>
+  <div class="fs-slide-num" id="fs-num"></div>
+  <div class="fs-label" id="fs-label"></div>
+  <div class="fs-title" id="fs-title"></div>
+  <div class="fs-discours" id="fs-discours"></div>
+  <div class="fs-note" id="fs-note" style="display:none">
+    <div class="fs-note-label">Note presentateur</div>
+    <div id="fs-note-text"></div>
+  </div>
+  <div class="fs-nav">
+    <button class="fs-btn" id="fs-prev" onclick="go(-1);renderFS()">&#8592;</button>
+    <span class="fs-counter" id="fs-counter"></span>
+    <button class="fs-btn" id="fs-next" onclick="go(1);renderFS()">&#8594;</button>
+  </div>
+  <div class="fs-color-bar" id="fs-color-bar"></div>
+</div>
+
+<script>
+const SLIDES = [
+  {
+    num: 1, color: "#A1006B", label: "Introduction",
+    title: "TGVCare Assistant — Presentation",
+    discours: `Bonjour a tous. On traite chaque jour des dossiers BD30/G30, et on sait tous que certains cas ne rentrent pas dans le traitement automatique d'ONICS. C'est pour repondre a ca que j'ai concu le <strong>TGVCare Assistant</strong> : un outil <strong>rapide, fiable et guide</strong>, qui accompagne l'agent du premier segment jusqu'a la note Siebel.`,
+    note: null
+  },
+  {
+    num: 2, color: "#0088CE", label: "ONICS — Forces et limites",
+    title: "ONICS : ce qu'il fait bien, et ses angles morts",
+    discours: `ONICS reste <strong>notre outil central</strong>. Quand ANGORA synchronise correctement, le traitement est automatique et rapide. Mais quand la synchro echoue, quand le dossier est introuvable, quand on a plusieurs passagers avec des tarifs differents, l'agent se retrouve seul avec ses referentiels eparpilles. En situation de charge, c'est une <strong>source d'erreurs reelle</strong>. Et sur les frais annexes, ONICS n'apporte aucun appui.`,
+    note: "Insister sur la dependance a la synchro ANGORA. C'est le point de rupture que tout le monde connait."
+  },
+  {
+    num: 3, color: "#6E1E78", label: "Positionnement",
+    title: "Un complement, pas un remplacant",
+    discours: `Le TGVCare Assistant n'a pas vocation a remplacer ONICS. Il intervient <strong>la ou ONICS s'arrete</strong> : en amont quand la synchro n'a pas abouti, en parallele pour les cas que le systeme ne sait pas gerer seul. Les deux outils sont complementaires.`,
+    note: null
+  },
+  {
+    num: 4, color: "#0088CE", label: "Les piliers",
+    title: "Ce que l'outil apporte concretement",
+    discours: `L'outil <strong>guide l'agent etape par etape</strong>, sans risque d'oubli. Les baremes BD30/G30 et les regles PRR 2021 sont integres directement. Il fonctionne pour tous les niveaux, que l'agent soit sur son premier dossier ou experimente, et gere les <strong>multi-segments TGV INOUI, TER, OUIGO</strong> sans calcul manuel. Les 50 derniers dossiers sont sauvegardes automatiquement.`,
+    note: null
+  },
+  {
+    num: 5, color: "#82BE00", label: "Les 4 modules",
+    title: "4 modules pour couvrir tous les cas",
+    discours: `L'assistant est organise en <strong>4 modules</strong>. Le calcul retard et indemnisation, guide segment par segment. Les frais annexes, avec les plafonds de l'Annexe 1 appliques automatiquement. La retractation et resiliation sur 14 jours. Et la consultation des baremes G30/BD30 par transporteur. <strong>Tout le referentiel PRR 2021 est embarque.</strong>`,
+    note: null
+  },
+  {
+    num: 6, color: "#E05206", label: "Valeur ajoutee",
+    title: "Les cas complexes que l'outil gere seul",
+    discours: `Ce qui distingue vraiment l'outil, c'est sa capacite a gerer les <strong>situations que les agents rencontrent sur le terrain</strong> et qui sortent du traitement standard : multi-passagers avec tarifs differents, trains TRSI hors perimetre, billet direct OUIGO avec complement CARE, <strong>indemnisation exceptionnelle jusqu'a 300%</strong> sur incidents majeurs, plafonds frais annexes adaptes selon la situation, et generation automatique de la note Siebel.`,
+    note: "C'est ici que l'outil montre vraiment sa valeur ajoutee. Prendre le temps sur chaque cas."
+  },
+  {
+    num: 7, color: "#A1006B", label: "Scenario de reference",
+    title: "Exemple concret : 4 segments, frais inclus",
+    discours: `Pour illustrer : un dossier <strong>Le Havre vers Nice</strong> en 4 segments, rupture de correspondance a Paris, retard final de 13h43. L'outil calcule <strong>124,17 euros d'indemnisation</strong> sur les quatre segments selon leurs baremes respectifs, y compris un complement exceptionnel a 150% sur le segment TGV INOUI, integre les frais annexes DIGIPEC pour <strong>219,90 euros</strong>, et sort un total dossier de <strong>344,07 euros</strong>. La note Siebel est generee en un clic.`,
+    note: "Montrer le chemin de navigation dans l'outil si on a le temps."
+  },
+  {
+    num: 8, color: "#0088CE", label: "Detail du calcul",
+    title: "Comment l'outil applique les regles",
+    discours: `Sur ce dossier Le Havre-Nice : le <strong>TER NOMAD KRONO+</strong> est indemnise a 75% avec son bareme specifique. Le <strong>TGV INOUI Paris-Marseille</strong> applique le taux standard plus un <strong>complement exceptionnel a 150%</strong> sur incidents majeurs. Le <strong>TER ZOU Marseille-Nice</strong>, non TRSI, est eligible et indemnise a 50%. Chaque taux est applique automatiquement selon le transporteur et le palier. Sans l'outil, ce calcul prend facilement dix minutes et laisse de la place a l'erreur.`,
+    note: null
+  },
+  {
+    num: 9, color: "#6E1E78", label: "Bilan",
+    title: "ONICS seul vs ONICS avec le BD30Assistant",
+    discours: `Le bilan parle de lui-meme. Sans l'outil, un agent peut appliquer le taux exceptionnel a tous les segments alors qu'il ne concerne qu'un seul, ne pas connaitre le plafond taxi nuit, ou ignorer que le TER est indemnisable sur billet direct. Avec le BD30Assistant : <strong>14 tarifs couverts, calculs conformes au referentiel, et un gain de temps significatif sur les dossiers hors-norme.</strong>`,
+    note: null
+  },
+  {
+    num: 10, color: "#82BE00", label: "Conclusion",
+    title: "Un outil concu sur le terrain, pour le terrain",
+    discours: `Ce que je vous presente aujourd'hui, c'est un outil <strong>ne de la pratique quotidienne</strong>. Il a ete construit avec Claude Code, un assistant IA d'Anthropic, a qui j'ai fourni toute l'expertise metier : les regles PRR 2021, les baremes par transporteur, les cas limites, les exceptions TRSI, les plafonds frais. L'IA a traduit ca en code. Moi j'ai apporte la connaissance du referentiel et valide chaque regle. Ce que je soumets aujourd'hui, c'est la question de son <strong>integration officielle.</strong>`,
+    note: "Etre direct et serein sur l'utilisation de l'IA. Repositionner sur l'expertise metier apportee."
+  },
+  {
+    num: 11, color: "#A1006B", label: "Demo live",
+    title: "Place a la demonstration",
+    discours: `Je vous propose maintenant de voir l'outil en conditions reelles. On va traiter un dossier en direct, du premier segment jusqu'a la note Siebel, pour que vous puissiez juger par vous-memes.`,
+    note: "Avoir l'outil ouvert et pret avant la reunion. Tester la connexion en avance."
+  }
+];
+
+const OBJECTIONS = [
+  {
+    q: "Pourquoi ne pas avoir remonte le besoin a la DSI plutot que de le faire soi-meme ?",
+    r: "J'ai fait ca par ce biais justement, en construisant la solution pour demontrer concretement le besoin et la faisabilite. Un cahier des charges sans prototype aurait pris des mois, si tant est qu'il ait ete priorise. La on a un outil qui tourne et qu'on peut evaluer aujourd'hui."
+  },
+  {
+    q: "Est-ce que les calculs sont fiables ?",
+    r: "L'outil s'appuie sur nos referentiels internes : le PRR 2021, les CGV SNCF, le bareme Annexe 1 et les notes de service CARE. Chaque regle est tracee et verifiable. La demonstration montre qu'il corrige des erreurs qu'ONICS produit sur les cas complexes."
+  },
+  {
+    q: "Qui maintient l'outil si les regles changent ?",
+    r: "Aujourd'hui, c'est moi qui le fais. C'est precisement pourquoi je le soumets a l'equipe : pour qu'il soit reconnu officiellement et maintenu dans un cadre structure, avec les ressources appropriees."
+  },
+  {
+    q: "Ca pose des questions de propriete intellectuelle.",
+    r: "C'est un point legitime que je suis pret a traiter. L'objectif de cette demarche, c'est justement d'officialiser l'outil pour clarifier ce cadre et lui donner une existence formelle au sein de SNCF."
+  },
+  {
+    q: "Les agents devront-ils se former pour l'utiliser ?",
+    r: "Non. L'outil est concu pour etre autonome. Il guide l'agent a chaque etape, sans formation prealable. Une prise en main de quelques minutes suffit, meme pour quelqu'un qui ne connait pas encore bien les baremes."
+  },
+  {
+    q: "Comment tu as fait ca ? C'est l'IA qui a tout fait ?",
+    r: "L'IA a ecrit le code, oui. Mais le vrai travail, c'est de savoir quoi lui demander. J'ai fourni toute l'expertise metier : les regles PRR, les cas complexes, les baremes par transporteur, les exceptions TRSI, les plafonds frais. L'IA a traduit ca en code. Moi j'ai apporte la connaissance du referentiel et valide chaque regle, chaque calcul, chaque cas. Sans cette expertise, l'IA n'aurait rien pu produire d'utilisable. C'est comme Excel pour un controleur de gestion : l'outil n'a de valeur que par la main qui le pilote."
+  },
+  {
+    q: "N'importe qui aurait pu faire pareil alors ?",
+    r: "Avec la meme connaissance du referentiel et le meme investissement personnel, peut-etre. Mais personne ne l'avait fait."
+  },
+  {
+    q: "Est-ce que c'est securise ? Les donnees clients sont protegees ?",
+    r: "L'outil ne stocke aucune donnee client, ne se connecte a aucun systeme SNCF et ne necessite aucun acces reseau. C'est un calculateur local. Il n'y a aucun risque de fuite de donnees."
+  },
+  {
+    q: "Et si un agent fait une erreur de saisie ? L'outil peut produire un mauvais resultat.",
+    r: "Comme tout outil. Mais la difference, c'est que chaque etape est guidee et chaque regle est affichee clairement. L'agent voit le taux applique, le plafond retenu, le montant segment par segment. C'est beaucoup plus facile a relire et a corriger qu'un calcul manuel dans un coin de feuille."
+  },
+  {
+    q: "Est-ce que ca peut etre deploye pour toute l'equipe CARE ?",
+    r: "C'est exactement ce que je propose. L'outil fonctionne dans n'importe quel navigateur, sans installation. Il suffit de partager le lien ou le fichier. Un deploiement a l'echelle de l'equipe est techniquement immediat."
+  }
+];
+
+let current = 0;
+let objOpen = false;
+
+function render() {
+  const s = SLIDES[current];
+  const pct = ((current + 1) / SLIDES.length * 100).toFixed(0);
+  document.getElementById('progress-bar').style.width = pct + '%';
+  document.getElementById('slide-counter').textContent = 'Slide ' + s.num + ' / ' + SLIDES.length;
+
+  document.getElementById('slide-view').innerHTML =
+    '<div class="slide-card">' +
+      '<div class="slide-header">' +
+        '<div class="slide-num" style="background:' + s.color + '">' + s.num + '</div>' +
+        '<div>' +
+          '<div class="slide-label">' + s.label + '</div>' +
+          '<div class="slide-title">' + s.title + '</div>' +
+        '</div>' +
+      '</div>' +
+      '<div class="discours" style="border-left-color:' + s.color + '">' + s.discours + '</div>' +
+      (s.note ? '<div class="note-interne"><div class="note-label">Note presentateur</div>' + s.note + '</div>' : '') +
+    '</div>';
+
+  const dots = document.getElementById('dots');
+  dots.innerHTML = SLIDES.map(function(_, i) {
+    var cls = 'dot' + (i === current ? ' active' : i < current ? ' done' : '');
+    return '<button class="' + cls + '" onclick="jump(' + i + ')" title="Slide ' + (i+1) + '"></button>';
+  }).join('');
+
+  document.getElementById('btn-prev').disabled = current === 0;
+  document.getElementById('btn-next').disabled = current === SLIDES.length - 1;
+}
+
+function renderObj() {
+  document.getElementById('obj-list').innerHTML = OBJECTIONS.map(function(o) {
+    return '<div class="obj-item">' +
+      '<div class="obj-q">' + o.q + '</div>' +
+      '<div class="obj-r">' + o.r + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function renderFS() {
+  const s = SLIDES[current];
+  const pct = ((current + 1) / SLIDES.length * 100).toFixed(0);
+  document.getElementById('fs-prog').style.width = pct + '%';
+  document.getElementById('fs-num').textContent = 'Slide ' + s.num + ' sur ' + SLIDES.length;
+  document.getElementById('fs-label').textContent = s.label;
+  document.getElementById('fs-title').textContent = s.title;
+  document.getElementById('fs-discours').innerHTML = s.discours;
+  document.getElementById('fs-counter').textContent = s.num + ' / ' + SLIDES.length;
+  document.getElementById('fs-color-bar').style.background = s.color;
+  const noteEl = document.getElementById('fs-note');
+  const noteTxt = document.getElementById('fs-note-text');
+  if (s.note) { noteEl.style.display = 'block'; noteTxt.textContent = s.note; }
+  else { noteEl.style.display = 'none'; }
+  document.getElementById('fs-prev').disabled = current === 0;
+  document.getElementById('fs-next').disabled = current === SLIDES.length - 1;
+}
+
+function go(dir) {
+  current = Math.max(0, Math.min(SLIDES.length - 1, current + dir));
+  render();
+}
+
+function jump(i) {
+  current = i;
+  render();
+}
+
+function toggleDemo3() {
+  var open = document.getElementById('demo3-body').style.display !== 'none';
+  document.getElementById('demo3-body').style.display = open ? 'none' : 'block';
+  document.getElementById('demo3-toggle').className = 'objections-header' + (open ? '' : ' open');
+  document.getElementById('demo3-chevron').className = 'chevron' + (open ? '' : ' open');
+}
+
+function toggleDemo2() {
+  var open = document.getElementById('demo2-body').style.display !== 'none';
+  document.getElementById('demo2-body').style.display = open ? 'none' : 'block';
+  document.getElementById('demo2-toggle').className = 'objections-header' + (open ? '' : ' open');
+  document.getElementById('demo2-chevron').className = 'chevron' + (open ? '' : ' open');
+}
+
+function toggleDemo() {
+  var open = document.getElementById('demo-body').style.display !== 'none';
+  document.getElementById('demo-body').style.display = open ? 'none' : 'block';
+  document.getElementById('demo-toggle').className = 'objections-header' + (open ? '' : ' open');
+  document.getElementById('demo-chevron').className = 'chevron' + (open ? '' : ' open');
+}
+
+function toggleObj() {
+  objOpen = !objOpen;
+  document.getElementById('obj-body').style.display = objOpen ? 'block' : 'none';
+  document.getElementById('obj-toggle').className = 'objections-header' + (objOpen ? ' open' : '');
+  document.getElementById('obj-chevron').className = 'chevron' + (objOpen ? ' open' : '');
+}
+
+function openFullscreen() {
+  renderFS();
+  document.getElementById('fullscreen-overlay').classList.add('active');
+}
+
+function closeFullscreen() {
+  document.getElementById('fullscreen-overlay').classList.remove('active');
+}
+
+document.addEventListener('keydown', function(e) {
+  const fs = document.getElementById('fullscreen-overlay').classList.contains('active');
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault(); go(1); if (fs) renderFS();
+  }
+  if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault(); go(-1); if (fs) renderFS();
+  }
+  if (e.key === 'Escape') closeFullscreen();
+  if (e.key === 'f' || e.key === 'F') { if (!fs) openFullscreen(); }
+});
+
+renderObj();
+render();
+</script>
+</body>
+</html>
