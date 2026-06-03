@@ -257,7 +257,7 @@
       </div>
     </div>
     <div style="display:flex;align-items:center;gap:12px;">
-      <div class="header-meta">30 min &middot; Managers et encadrement<br>11 slides + objections</div>
+      <div class="header-meta">30 min &middot; Managers et encadrement<br>12 slides + objections</div>
       <button class="fullscreen-btn" onclick="openFullscreen()">
         <i class="ti ti-presentation"></i> Presenter
       </button>
@@ -823,13 +823,19 @@ const SLIDES = [
     note: null
   },
   {
-    num: 10, color: "#82BE00", label: "Conclusion",
+    num: 10, color: "#34D399", label: "Retour sur investissement",
+    title: "Ce que ca represente concretement pour l'equipe",
+    discours: `Parlons de ce que ca change en pratique. Sur un volume de <strong>50 dossiers par semaine</strong>, 30% sont des cas complexes — soit 15 dossiers qui mobilisent aujourd'hui 7 a 10 minutes de calcul manuel chacun. Avec l'outil, ce calcul prend <strong>3 mn maximum</strong>. Sur 47 semaines de travail, ca represente <strong>82 heures recuperees par an et par agent</strong> — soit l'equivalent de deux semaines de dossiers complexes traites en plus. En valeur brute, c'est <strong>1 500 euros par agent</strong>, et surtout <strong>188 dossiers supplementaires traites</strong> a volume d'heures constant. Pour l'equipe complete, ces chiffres sont a multiplier directement. Et le cout de deploiement : <strong>zero euro</strong>. L'outil est operationnel aujourd'hui.`,
+    note: "⏱ 3 min max — Laisser le calcul parler. Ne pas defendre les chiffres : ils sont sur l'ecran, verifiables. Insister sur le 0 euro de deploiement et la disponibilite immediate."
+  },
+  {
+    num: 11, color: "#82BE00", label: "Conclusion",
     title: "Un outil concu sur le terrain, pour le terrain",
     discours: `Ce que je vous presente aujourd'hui, c'est un outil <strong>ne de la pratique quotidienne</strong>. Il a ete construit avec Claude Code, un assistant IA d'Anthropic, a qui j'ai fourni toute l'expertise metier : les regles PRR 2021, les baremes par transporteur, les cas limites, les exceptions TRSI, les plafonds frais. L'IA a traduit ca en code. Moi j'ai apporte la connaissance du referentiel et valide chaque regle. Ce que je soumets aujourd'hui, c'est la question de son <strong>integration officielle.</strong>`,
     note: "Etre direct et serein sur l'utilisation de l'IA. Repositionner sur l'expertise metier apportee."
   },
   {
-    num: 11, color: "#A1006B", label: "Demo live",
+    num: 12, color: "#A1006B", label: "Demo live",
     title: "Place a la demonstration",
     discours: `Je vous propose maintenant de voir l'outil en conditions reelles. On va traiter un dossier en direct, du premier segment jusqu'a la note Siebel, pour que vous puissiez juger par vous-memes.`,
     note: "Avoir l'outil ouvert et pret avant la reunion. Tester la connexion en avance."
